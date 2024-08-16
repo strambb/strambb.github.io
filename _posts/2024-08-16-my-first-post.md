@@ -1,21 +1,10 @@
 ---
 layout: post
-title: My first post
+title: Welcome!
 date: 2024-08-16 19:27:13 +0200
 ---
+# Welcome to my blog and portfolio site
 
-Maybe finally I managed to create this post :D 
-Maybe editing via obsidian works, too :D
-Or maybe not?
+Welcome to my new blog and portfolio site on which I publish everything from personal notes, how-to's as well as tips and tricks I encounter. With this blog I want to document thing for my personally and hope that maybe some of you find something useful here, too! 
 
-so let's see what is going to happen on this end?
-At least I can now easily write my posts on obsidian and publish in near realtime :)
-
-## This is a level 2 heading
-### This is level 3
-#### and this is level 4
-
-A picture: 
-![[Screenshot_2024-08-16_20-12-40.png]]
-
-Above should be an image now
+If you have a question just drop me a mail via the button on the bottom left. See you!
