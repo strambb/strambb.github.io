@@ -6,6 +6,7 @@ tags:
   - post
 categories: Personal
 author: strambb
+pin: true
 ---
 # Welcome to my blog and portfolio site!
 
