@@ -17,3 +17,5 @@ At least I can now easily write my posts on obsidian and publish in near realtim
 
 A picture: 
 ![[Screenshot_2024-08-16_20-12-40.png]]
+
+Above should be an image now
