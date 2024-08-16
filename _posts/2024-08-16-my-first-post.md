@@ -2,6 +2,9 @@
 layout: post
 title: Welcome!
 date: 2024-08-16 19:27:13 +0200
+tags:
+  - post
+categories: Personal
 ---
 # Welcome to my blog and portfolio site
 
