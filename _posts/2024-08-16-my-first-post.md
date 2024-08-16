@@ -10,3 +10,10 @@ Or maybe not?
 
 so let's see what is going to happen on this end?
 At least I can now easily write my posts on obsidian and publish in near realtime :)
+
+## This is a level 2 heading
+### This is level 3
+#### and this is level 4
+
+A picture: 
+S
