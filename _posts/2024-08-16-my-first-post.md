@@ -16,3 +16,4 @@ At least I can now easily write my posts on obsidian and publish in near realtim
 #### and this is level 4
 
 A picture: 
+![[Screenshot_2024-08-16_20-12-40.png]]
