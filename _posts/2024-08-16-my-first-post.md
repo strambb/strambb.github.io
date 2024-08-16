@@ -9,3 +9,4 @@ Maybe editing via obsidian works, too :D
 Or maybe not?
 
 so let's see what is going to happen on this end?
+At least I can now easily write my posts on obsidian and publish in near realtime :)
