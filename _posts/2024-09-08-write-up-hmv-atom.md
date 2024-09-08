@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Write-Up HMV Atom
-date: 2024-08-25 12:50 +0200
+date: 2024-09-07 12:50 +0200
 tags:
 - post
 - proxmox
