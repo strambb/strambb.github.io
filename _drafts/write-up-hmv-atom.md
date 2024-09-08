@@ -559,7 +559,7 @@ $ john --show hash2
 1 password hash cracked, 0 left
 ```
 
-# Horizontal Escalation
+# Vertical Escalation to Root
 
 Nice, we found the the password of user atom. Let's try to su into root using the password
 
