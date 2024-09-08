@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Write-Up HMV Atom
-date: 2024-09-07 15:54 +0200
+date: 2024-08-25 12:50 +0200
 tags:
 - post
 - proxmox
@@ -13,11 +13,8 @@ tags:
 categories: Write-up, OffSec,
 author: strambb
 pin: false
-date: 2024-08-25 12:50 +0200
 media_subpath: "/assets/images/"
 ---
-
-
 <iframe src="https://hackmyvm.eu/machines/vmcard.php?vm=Atom" frameborder="0" width="600" height="600"></iframe>
 
 
