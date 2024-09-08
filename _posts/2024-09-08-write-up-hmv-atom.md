@@ -10,7 +10,9 @@ tags:
 - Write-up
 - nmap
 - IPMI
-categories: Write-up, OffSec,
+categories: 
+- Write-up 
+- OffSec
 author: strambb
 pin: false
 media_subpath: "/assets/images/"
