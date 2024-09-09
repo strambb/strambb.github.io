@@ -78,7 +78,7 @@ The user flag can be seen by `2>/dev/null; cat user.txt`
 # Reverse shell
 
 Alright, to make our live easier, let's run a reverse shell on the target connecting back to port 4444 on our machine.
-For this I like to use https://www.revshells.com/ as it provides an easy way to configure both parties in the mix.
+For this I like to use [revshells](https://www.revshells.com/) as it provides an easy way to configure both parties in the mix.
 To upload the shell we use a simple wget command on the target machine.
 
 
