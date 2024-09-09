@@ -20,7 +20,7 @@ pin: false
 
 
 # Introduction
-In this write-up I will show how to obtain root access in the Atom VM by [rpj7](https://hackmyvm.eu/profile/?user=tasiyanci).
+In this write-up I will show how to obtain root access in the Azer VM by [tasiyanci](https://hackmyvm.eu/profile/?user=tasiyanci).
 The VM was his birthday gift to the community
 
 The VM was setup in my isolated network on Proxmox. If you  want to do it the same way, you can find my guide here: [Setup Virtual Box in Proxmox]({% post_url 2024-08-20-setting-up-virtual-boxes-on-proxmox %})
