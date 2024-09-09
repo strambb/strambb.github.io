@@ -7,8 +7,8 @@ order: 4
 # Hi, my name is Marius!
 
 Thank you for visiting my blog!
-My name is Marius and I am posting here on my blog on topics like Proxmox, Digital Product Management, Politics and many other. 
-You can find tutorials, tip and tricks nex to cheatsheet and other personal notes from me.
+My name is Marius and I'm posting here on my blog about Proxmox, Digital Product Management, Cyber Security, Social Matters and many other topics. 
+You can find tutorials, tip and tricks next to cheatsheet and other personal notes from me.
 
 Outside of my free time, I'm a Digital Product Manager with multiple year of experience in legacy systems, cloud-based web applications as well as IIot-Setups. My tasks range from inital user research via requirements gathering and refinement to taking care of the development team and help them shipping successful product to customers.
  
