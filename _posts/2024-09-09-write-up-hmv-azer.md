@@ -9,7 +9,8 @@ tags:
 - HackMyVM
 - Write-up
 - nmap
-- IPMI
+- Broken Auth
+- Meterpreter
 categories:
 - Write-up
 - OffSec
