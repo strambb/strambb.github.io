@@ -15,6 +15,11 @@ Outside of my free time, I'm a Digital Product Manager with multiple year of exp
 I you want to know more, don't hesitate to contact me via email:
 [blog.sn4g7@passmail.net](mailto:blog.sn4g7@passmail.net)
 
+[HMV Rank](https://hackmyvm.eu/profile/?user=rogfg)
+
+[THM Profile](https://tryhackme.com/p/Mjg03b)
+ 
+ <script src="https://tryhackme.com/badge/1144152"></script>
 
  [//]: # > Add Markdown syntax content to file `_tabs/about.md`{: .filepath } and it will show up on this page. 
  [//]: # {: .prompt-tip }
