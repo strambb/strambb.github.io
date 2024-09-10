@@ -21,7 +21,7 @@ media_subpath: "/assets/images/"
 
 
 # Introduction
-In this write-up I will show how to obtain root access in the Atom VM by [rpj7](https://hackmyvm.eu/profile/?user=rpj7)
+In this write-up I will show how to obtain root access in the Atom VM by [cromiphi](https://hackmyvm.eu/profile/?user=cromiphi)
 
 The VM was setup in my isolated network on Proxmox. If you  want to do it the same way, you can find my guide here: [Setup Virtual Box in Proxmox]({% post_url 2024-08-20-setting-up-virtual-boxes-on-proxmox %})
 
@@ -110,7 +110,7 @@ PORT      STATE         SERVICE         REASON
 518/udp   closed        ntalk           port-unreach ttl 63
 520/udp   closed        route           port-unreach ttl 63
 593/udp   open|filtered http-rpc-epmap  no-response
-#################### Here is a open port ##################
+#################### Here is an open port #################
 623/udp   open          asf-rmcp        udp-response ttl 62
 ###########################################################
 626/udp   open|filtered serialnumberd   no-response
