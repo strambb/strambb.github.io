@@ -146,7 +146,7 @@ The disk must now be importet to the newly created VM
 cd /tmp
 
 # Import disk to local-lvm and format in qcow2, not yet attached
-qm importdisk "$VM_ID" SaveSanta-HMV-disk001.vmdk local-lvm --format qcow2
+qm importdisk "$VM_ID" SaveSanta-HMV-disk001.vmdk local-lvm 
 ```
 
 ![](/assets/images/Pasted image 20240817125104.png)
@@ -154,7 +154,6 @@ qm importdisk "$VM_ID" SaveSanta-HMV-disk001.vmdk local-lvm --format qcow2
 
 ![](/assets/images/Pasted image 20240817125643.png)
 
-*TODO: check if qcow2 option is necessary*
 
 Finally we attach the disk to the controller of the VM and change the boot order to boot from disk
 
@@ -169,7 +168,7 @@ qm set "$VM_ID" --boot="order=sata0"
 ```
 ![](/assets/images/Pasted image 20240817125930.png)
 
-Now we can start the VM and see if everything is running smootly
+Now we can start the VM and see if everything is running smoothly
 
 ```bash
 qm start "$VM_ID"
