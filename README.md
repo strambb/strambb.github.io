@@ -1,5 +1,9 @@
 # Chirpy Starter
 
+Writing a new post: [text](https://chirpy.cotes.page/posts/write-a-new-post/)
+with jekyll compose [text](https://github.com/jekyll/jekyll-compose)
+
+
 [![Gem Version](https://img.shields.io/gem/v/jekyll-theme-chirpy)][gem]&nbsp;
 [![GitHub license](https://img.shields.io/github/license/cotes2020/chirpy-starter.svg?color=blue)][mit]
 
