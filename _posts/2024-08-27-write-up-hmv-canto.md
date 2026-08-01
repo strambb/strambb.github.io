@@ -8,8 +8,9 @@ tags:
 - HackMyVM
 - Write-up
 - nmap
--
-categories: Write-up, OffSec,
+- OffSec
+categories: 
+- Write-up 
 author: strambb
 pin: false
 date: 2024-08-25 12:50 +0200

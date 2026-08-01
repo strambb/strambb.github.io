@@ -11,9 +11,9 @@ tags:
 - nmap
 - Broken Auth
 - Meterpreter
-categories:
-- Write-up
 - OffSec
+categories:
+- Write-up 
 author: strambb
 pin: false
 ---
