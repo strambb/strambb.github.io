@@ -37,7 +37,7 @@ Overview as of today:
 - [x] Information Gathering - Web Edition
 - [x] Vulnerability Assessment
 - [x] File Transfers
-- [ ] Shells & Payloads
+- [x] Shells & Payloads
 - [ ] Using the Metasploit Framework
 - [ ] Password Attacks
 - [ ] Attacking Common Services
